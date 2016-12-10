@@ -1,0 +1,22 @@
+{
+  "name": "fb-auth-service",
+  "version":"1.0.0",
+  "description": "Auth Service",
+  "main": [
+    "src/authService.js"
+  "authors": [
+    "Mahmut Duva"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "Auth Service"
+  ],
+  "dependencies": {
+    "angular": "> 1.6.0"
+  },
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "bower_components"
+  ]
+}
