@@ -4,6 +4,7 @@
   "description": "Auth Service",
   "main": [
     "src/authService.js"
+  ],
   "authors": [
     "Mahmut Duva"
   ],
