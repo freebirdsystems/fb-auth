@@ -11,13 +11,14 @@ function AuthService($cookies, $q, $http) {
     var domain;
 
 
-    var setToken = function (token) {
-        $cookies.put('_token', token, {domain: domain});
+    var setToken = function (token, cookieHost) {
+        domain = cookieHost;
+        $cookies.put('_token', token, {'domain': domain});
     };
 
 
     var getToken = function (cookieHost) {
-        return $cookies.get('_token', {domain: cookieHost});
+        return $cookies.get('_token', {'domain': domain});
     };
 
 
@@ -55,7 +56,7 @@ function AuthService($cookies, $q, $http) {
             }
         }).then(function (response) {
 
-            $cookies.remove('_token', {domain: domain});
+            $cookies.remove('_token', {'domain': domain});
             deferred.resolve(response);
             
         }, function (response) {
@@ -67,7 +68,7 @@ function AuthService($cookies, $q, $http) {
     };
 
 
-    var login = function (path, data) {
+    var login = function (path, data, cookieHost) {
 
         var deferred = $q.defer();
 
@@ -77,7 +78,7 @@ function AuthService($cookies, $q, $http) {
             data: data
         }).then(function (response) {
 
-            setToken(response.data.token);
+            setToken(response.data.token, cookieHost);
             setInit(response.data.bootstrap_loader);
             deferred.resolve(response);
 
