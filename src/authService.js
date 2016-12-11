@@ -1,107 +1,107 @@
 'use strict';
 
 angular
-  .module('authService')
+  .module('authService', [])
   .factory('AuthService', AuthService);
 
 
 function AuthService($cookies, $q, $http, ENV) {
 
   var initResponse;
-
-  return {
-
-    /**
-     * @name setHeaders
-     * @desc
-     */
-    setHeaders: function () {
-
-      var _token = this.getToken();
-
-      var obj = {};
-      if (_token) {
-        obj = {'X-Authorization': _token};
-      }
-      Restangular.setDefaultHeaders(obj);
-    },
+  var domain;
 
 
-    /**
-     * @name setToken
-     * @desc
-     * @param token
-     */
-    setToken: function (token, domain) {
+  var setToken = function (token) {
       $cookies.put('_token', token, { domain: domain });
-    },
+  }
+
+  var getToken = function (cookieHost) {
+      return $cookies.get('_token', { domain: cookieHost });
+  }
 
 
-
-    setInit : function(response){
+  var setInit =  function(response){
       initResponse = response;
-    },
+  }
 
 
-    getInit: function(){
+  var getInit = function(){
       return initResponse;
-    },
-
-    /**
-     * @name getToken
-     * @desc
-     * @returns {*|string}
-     */
-    getToken: function () {
-      return $cookies.get('_token', { domain: domain });
-    },
+  }
 
 
-    /**
+  var getHeaders = function (cookieHost) {
+
+      domain = cookieHost;
+      
+      var _token = getToken(domain);
+
+      if(_token){
+        var obj = {'X-Authorization': _token};
+        return obj
+      }
+
+  }
+
+
+      /**
      * @name logout
      * @desc
      * @returns {*}
      */
-    logout: function (path, domain) {
-
+    var logout = function (path) {
+      var deferred = $q.defer();
       $http({
-            method: 'GET',
-            url: path
+              method: 'GET',
+              url: path,
+              headers: {
+                'X-Authorization': getToken()
+              }
            }).then(function (response) {
+              debugger
               $cookies.remove('_token', { domain: domain });
+              deferred.resolve(response);
            }, function (response) {
-    
+              deferred.reject(response);
            });
 
-    },
+      return deferred.promise;     
+
+    }
 
 
-    /**
-     * @name login
-     * @desc
-     * @param user
-     * @returns {*}
-     */
-    login: function (path, data) {
+    var login = function (path, data) {
 
       var deferred = $q.defer();
 
+      debugger
       $http({
               method: 'POST',
               url: path, 
               data: data
             })
             .then(function (response) {
-                deferred.resolve(data);
+              debugger
+                setToken(response.data.token);
+                setInit(response.data.bootstrap_loader);
+                deferred.resolve(response);
             }, 
             function (response) {
-                deferred.reject(data);
+                deferred.reject(response);
             });
 
       return deferred.promise;
 
     }
 
+  return {
+
+    login      : login,
+    getHeaders : getHeaders,
+    logout     : logout,
+    getToken   : getToken,
+    getInit    : getInit,
+    setInit    : setInit
 
   };
 }
