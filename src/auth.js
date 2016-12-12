@@ -8,70 +8,46 @@ angular
 
 
 function hasPermission(AuthorizationService){
-    return {
-        restrict:'A',
-        scope:{
-            asArray:'=?',
-        },
-        link: function(scope, element, attrs) {
-             
-            if(scope.asArray) {
-               toggleByArray()
-            } 
-            else if (typeof attrs.hasPermission === "string"){
-               toggleByString()
-            }
+  return {
+    link: function(scope, element, attrs) {
+      if(!_.isString(attrs.hasPermission)) {
+        throw 'hasPermission value must be a string'
+      }
+      var value = attrs.hasPermission.trim();
+      var notPermissionFlag = value[0] === '!';
+      if(notPermissionFlag) {
+        value = value.slice(1).trim();
+      }
 
-            function toggleByString() {
-               var value = attrs.hasPermission.trim();
+      function toggleVisibilityBasedOnPermission() {
+        var hasPermission = AuthorizationService.hasPermission(value);
+        if(hasPermission && !notPermissionFlag || !hasPermission && notPermissionFlag) {
+          element.removeClass('ng-hide');
+        }
+        else {
+          element.addClass('ng-hide');
+        }
+      }
 
-               var hasPermission = AuthorizationService.hasPermission(value);
-
-               if(hasPermission) {
-                element.removeClass('ng-hide');
-               }
-               else {
-                element.addClass('ng-hide');
-               }
-               scope.$on('permissionsChanged', toggleByString);
-            }    
-
-            function toggleByArray() {
-               var show = false;
-               var values = [];
-               var elemArr = element.find('ul li');
-
-               for(var idx=0 ; idx<elemArr.length ; ++idx){
-                 var thisElem = elemArr[idx];
-                 values.push(thisElem.getAttribute('has-permission'))
-               }
-
-               values.forEach(function(value){
-                 var hasPermission = AuthorizationService.hasPermission(value);
-                 if(hasPermission){
-                   show = true;
-                 }
-               })
-
-               if(show) {
-                 element.show();
-               }
-               else {
-                 element.hide();
-               }
-               scope.$on('permissionsChanged', toggleByString);
-            }
-        }    
-             
+      toggleVisibilityBasedOnPermission();
+      scope.$on('permissionsChanged', toggleVisibilityBasedOnPermission);
     }
+  }
 }
 
 
-function AuthenticationService($cookies, $q, $http, AuthorizationService) {
+
+
+function AuthenticationService($cookies, $q, $http, AuthorizationService, $location) {
 
     var initResponse;
     var domain;
 
+
+    var removeToken = function(){
+        $cookies.remove('_token', {'domain': domain});
+        $location.path('/login');
+    }
 
     var setToken = function (token, cookieHost) {
         domain = cookieHost;
@@ -122,6 +98,7 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService) {
         }).then(function (response) {
 
             $cookies.remove('_token', {'domain': domain});
+            $location.path('/login');
             deferred.resolve(response);
             
         }, function (response) {
@@ -164,7 +141,8 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService) {
         getToken    : getToken,
         getInit     : getInit,
         setInit     : setInit,
-        setToken    : setToken
+        setToken    : setToken,
+        removeToken : removeToken
 
     };
 }
