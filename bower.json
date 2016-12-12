@@ -1,9 +1,9 @@
 {
-  "name": "fb-auth-service",
+  "name": "fb-auth",
   "version":"1.0.0",
-  "description": "Auth Service",
+  "description": "Auth",
   "main": [
-    "src/authService.js"
+    "src/auth.js"
   ],
   "authors": [
     "Mahmut Duva"
