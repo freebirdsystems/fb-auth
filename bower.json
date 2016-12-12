@@ -13,7 +13,6 @@
     "Auth Service"
   ],
   "dependencies": {
-    "angular": "> 1.6.0"
   },
   "homepage": "",
   "ignore": [

@@ -86,7 +86,6 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService) {
 
     var setInit = function (response) {
         AuthorizationService.setPermissions(response.user.positions.active.permissions);
-        debugger
         initResponse = response;
     };
 
