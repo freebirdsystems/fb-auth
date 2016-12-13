@@ -38,44 +38,46 @@ function hasPermission(AuthorizationService){
 
 
 
-function AuthenticationService($cookies, $q, $http, AuthorizationService, $location) {
+function AuthenticationService($cookies, $q, $http, AuthorizationService, $state, ENV) {
 
-    var initResponse;
-    var domain;
+    var _initResponse;
 
+    var _tokenName   =  ENV.tokenName  || '_token';
+    var _loginState  =  ENV.loginState || 'login';
+    var _homeState   =  ENV.homeState  || 'dashboard';
+    var _loginPath   =  ENV.apiCockpit.concat(ENV.loginPath || '/auth/login');
+    var _logoutPath  =  ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout');
 
     var removeToken = function(){
-        $cookies.remove('_token', {'domain': domain});
-        $location.path('/login');
+        $cookies.remove(_tokenName, {'domain': ENV.cookieHost});
+        $state.go(_loginState);
     }
 
-    var setToken = function (token, cookieHost) {
-        domain = cookieHost;
-        $cookies.put('_token', token, {'domain': domain});
+    var setToken = function (token) {
+        $cookies.put(_tokenName, token, {'domain': ENV.cookieHost});
     };
 
 
-    var getToken = function (cookieHost) {
-        return $cookies.get('_token', {'domain': domain});
+    var getToken = function () {
+        return $cookies.get(_tokenName, {'domain': ENV.cookieHost});
     };
 
 
     var setInit = function (response) {
         AuthorizationService.setPermissions(response.user.positions.active.permissions);
-        initResponse = response;
+        _initResponse = response;
     };
 
 
     var getInit = function () {
-        return initResponse;
+        return _initResponse;
     };
 
 
-    var getHeaders = function (cookieHost) {
+    var getHeaders = function () {
 
-        domain = cookieHost;
 
-        var _token = getToken(domain);
+        var _token = getToken();
 
         if (_token) {
             var obj = {'X-Authorization': _token};
@@ -85,56 +87,50 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $locat
     };
 
 
-    var logout = function (path) {
-
-        var deferred = $q.defer();
+    var logout = function () {
 
         $http({
             method: 'GET',
-            url: path,
-            headers: {
-                'X-Authorization': getToken()
-            }
+            url: _logoutPath,
+            headers: getHeaders()
+
         }).then(function (response) {
 
-            $cookies.remove('_token', {'domain': domain});
-            $location.path('/login');
-            deferred.resolve(response);
+            removeToken();
             
         }, function (response) {
-            deferred.reject(response);
-        });
 
-        return deferred.promise;
+        });
 
     };
 
 
-    var login = function (path, data, cookieHost) {
-
-        var deferred = $q.defer();
+    var login = function (data) {
 
         $http({
             method: 'POST',
-            url: path,
+            url: _loginPath,
             data: data
         }).then(function (response) {
 
-            setToken(response.data.token, cookieHost);
-            setInit(response.data.bootstrap_loader);
-            deferred.resolve(response);
+            setToken (response.data.token);
+            setInit (response.data.bootstrap_loader);
+            $state.go(_homeState);
 
-        }, function (response) {
-            deferred.reject(response);
+        }, function (error) {
+            toaster.pop('error', 'Whoops!', error.data.errors[0].message);
         });
-
-        return deferred.promise;
 
     };
 
+    var checkToken = function(){
+        if (typeof getToken() !== 'undefined') {
+            $state.go(_homeState);
+        }
+    }
 
     return {
-
+        checkToken  : checkToken,
         login       : login,
         getHeaders  : getHeaders,
         logout      : logout,
@@ -143,7 +139,6 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $locat
         setInit     : setInit,
         setToken    : setToken,
         removeToken : removeToken
-
     };
 }
 
@@ -163,6 +158,3 @@ function AuthorizationService($rootScope){
         }
     };
 }
-
-
-
