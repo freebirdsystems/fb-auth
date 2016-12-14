@@ -7,6 +7,11 @@ angular
     .directive('hasPermission', hasPermission);
 
 
+/**
+ * @name  hasPermission
+ * @param AuthorizationService
+ * @returns {{link: link}}
+ */
 function hasPermission(AuthorizationService){
   return {
     link: function(scope, element, attrs) {
@@ -36,8 +41,17 @@ function hasPermission(AuthorizationService){
 }
 
 
-
-
+/**
+ * @name AuthenticationService
+ * @param $cookies
+ * @param $q
+ * @param $http
+ * @param AuthorizationService
+ * @param $state
+ * @param ENV
+ * @returns {{checkToken: checkToken, login: login, getHeaders: getHeaders, logout: logout, getToken: getToken, getInit: getInit, setInit: setInit, setToken: setToken, removeToken: removeToken}}
+ * @constructor
+ */
 function AuthenticationService($cookies, $q, $http, AuthorizationService, $state, ENV) {
 
     var _initResponse;
@@ -143,6 +157,12 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
 }
 
 
+/**
+ * @name AuthorizationService
+ * @param $rootScope
+ * @returns {{setPermissions: setPermissions, hasPermission: hasPermission}}
+ * @constructor
+ */
 function AuthorizationService($rootScope){
 
     var permissionList;
