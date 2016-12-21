@@ -59,7 +59,7 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
     var _tokenName   =  ENV.tokenName  || '_token';
     var _loginState  =  ENV.loginState || 'login';
     var _homeState   =  ENV.homeState  || 'dashboard';
-    var _loginPath   =  ENV.apiCockpit.concat(ENV.loginPath || '/auth/login');
+    var _loginPath   =  ENV.apiCockpit.concat(ENV.loginPath || '/oauth/token');
     var _logoutPath  =  ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout');
 
     var removeToken = function(){
@@ -94,7 +94,7 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
         var _token = getToken();
 
         if (_token) {
-            var obj = {'X-Authorization': _token};
+            var obj = {'Authorization': 'Bearer ' + _token};
             return obj
         }
 
@@ -104,7 +104,7 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
     var logout = function () {
 
         $http({
-            method: 'GET',
+            method: 'POST',
             url: _logoutPath,
             headers: getHeaders()
 
@@ -127,8 +127,8 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
             data: data
         }).then(function (response) {
 
-            setToken (response.data.token);
-            setInit (response.data.bootstrap_loader);
+            setToken (response.data.access_token);
+            //setInit (response.data.bootstrap_loader);
             $state.go(_homeState);
 
         }, function (error) {
