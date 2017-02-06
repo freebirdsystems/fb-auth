@@ -1,45 +1,42 @@
-'use strict';
+'use strict'
 
 angular
     .module('auth', [])
     .factory('AuthenticationService', AuthenticationService)
     .factory('AuthorizationService', AuthorizationService)
-    .directive('hasPermission', hasPermission);
-
+    .directive('hasPermission', hasPermission)
 
 /**
  * @name  hasPermission
  * @param AuthorizationService
  * @returns {{link: link}}
  */
-function hasPermission(AuthorizationService){
+function hasPermission (AuthorizationService) {
   return {
-    link: function(scope, element, attrs) {
-      if(!_.isString(attrs.hasPermission)) {
+    link: function (scope, element, attrs) {
+      if (!_.isString(attrs.hasPermission)) {
         throw 'hasPermission value must be a string'
       }
-      var value = attrs.hasPermission.trim();
-      var notPermissionFlag = value[0] === '!';
-      if(notPermissionFlag) {
-        value = value.slice(1).trim();
+      var value = attrs.hasPermission.trim()
+      var notPermissionFlag = value[0] === '!'
+      if (notPermissionFlag) {
+        value = value.slice(1).trim()
       }
 
-      function toggleVisibilityBasedOnPermission() {
-        var hasPermission = AuthorizationService.hasPermission(value);
-        if(hasPermission && !notPermissionFlag || !hasPermission && notPermissionFlag) {
-          element.removeClass('ng-hide');
-        }
-        else {
-          element.addClass('ng-hide');
+      function toggleVisibilityBasedOnPermission () {
+        var hasPermission = AuthorizationService.hasPermission(value)
+        if (hasPermission && !notPermissionFlag || !hasPermission && notPermissionFlag) {
+          element.removeClass('ng-hide')
+        } else {
+          element.addClass('ng-hide')
         }
       }
 
-      toggleVisibilityBasedOnPermission();
-      scope.$on('permissionsChanged', toggleVisibilityBasedOnPermission);
+      toggleVisibilityBasedOnPermission()
+      scope.$on('permissionsChanged', toggleVisibilityBasedOnPermission)
     }
   }
 }
-
 
 /**
  * @name AuthenticationService
@@ -52,110 +49,90 @@ function hasPermission(AuthorizationService){
  * @returns {{checkToken: checkToken, login: login, getHeaders: getHeaders, logout: logout, getToken: getToken, getInit: getInit, setInit: setInit, setToken: setToken, removeToken: removeToken}}
  * @constructor
  */
-function AuthenticationService($cookies, $q, $http, AuthorizationService, $state, ENV) {
+function AuthenticationService ($cookies, $q, $http, AuthorizationService, $state, ENV, toaster) {
+  var _initResponse
 
-    var _initResponse;
+  var _tokenName = ENV.tokenName || '_token'
+  var _loginState = ENV.loginState || 'login'
+  var _homeState = ENV.homeState || 'dashboard'
+  var _loginPath = ENV.apiCockpit.concat(ENV.loginPath || '/oauth/token')
+  var _logoutPath = ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout')
 
-    var _tokenName   =  ENV.tokenName  || '_token';
-    var _loginState  =  ENV.loginState || 'login';
-    var _homeState   =  ENV.homeState  || 'dashboard';
-    var _loginPath   =  ENV.apiCockpit.concat(ENV.loginPath || '/oauth/token');
-    var _logoutPath  =  ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout');
+  var removeToken = function () {
+    $cookies.remove(_tokenName, {'domain': ENV.cookieHost})
+    $state.go(_loginState)
+  }
 
-    var removeToken = function(){
-        $cookies.remove(_tokenName, {'domain': ENV.cookieHost});
-        $state.go(_loginState);
+  var setToken = function (token) {
+    $cookies.put(_tokenName, token, {'domain': ENV.cookieHost})
+  }
+
+  var getToken = function () {
+    return $cookies.get(_tokenName, {'domain': ENV.cookieHost})
+  }
+
+  var setInit = function (response) {
+    AuthorizationService.setPermissions(response.user.positions.active.permissions)
+    _initResponse = response
+  }
+
+  var getInit = function () {
+    return _initResponse
+  }
+
+  var getHeaders = function () {
+    var _token = getToken()
+
+    if (_token) {
+      var obj = {'Authorization': 'Bearer ' + _token}
+      return obj
     }
+  }
 
-    var setToken = function (token) {
-        $cookies.put(_tokenName, token, {'domain': ENV.cookieHost});
-    };
+  var logout = function () {
+    $http({
+      method: 'POST',
+      url: _logoutPath,
+      headers: getHeaders()
 
+    }).then(function (response) {
+      removeToken()
+    }, function (response) {
 
-    var getToken = function () {
-        return $cookies.get(_tokenName, {'domain': ENV.cookieHost});
-    };
+    })
+  }
 
+  var login = function (data) {
+    $http({
+      method: 'POST',
+      url: _loginPath,
+      data: data
+    }).then(function (response) {
+      setToken(response.data.access_token)
+      $state.go(_homeState)
+    }, function (error) {
+      toaster.pop('error', 'Whoops!', error.data.message)
+    })
+  }
 
-    var setInit = function (response) {
-        AuthorizationService.setPermissions(response.user.positions.active.permissions);
-        _initResponse = response;
-    };
-
-
-    var getInit = function () {
-        return _initResponse;
-    };
-
-
-    var getHeaders = function () {
-
-
-        var _token = getToken();
-
-        if (_token) {
-            var obj = {'Authorization': 'Bearer ' + _token};
-            return obj
-        }
-
-    };
-
-
-    var logout = function () {
-
-        $http({
-            method: 'POST',
-            url: _logoutPath,
-            headers: getHeaders()
-
-        }).then(function (response) {
-
-            removeToken();
-            
-        }, function (response) {
-
-        });
-
-    };
-
-
-    var login = function (data) {
-
-        $http({
-            method: 'POST',
-            url: _loginPath,
-            data: data
-        }).then(function (response) {
-
-            setToken (response.data.access_token);
-            //setInit (response.data.bootstrap_loader);
-            $state.go(_homeState);
-
-        }, function (error) {
-            toaster.pop('error', 'Whoops!', error.data.errors[0].message);
-        });
-
-    };
-
-    var checkToken = function(){
-        if (typeof getToken() !== 'undefined') {
-            $state.go(_homeState);
-        }
+  var checkToken = function () {
+    if (typeof getToken() !== 'undefined') {
+      $state.go(_homeState)
     }
+  }
 
-    return {
-        checkToken  : checkToken,
-        login       : login,
-        getHeaders  : getHeaders,
-        logout      : logout,
-        getToken    : getToken,
-        getInit     : getInit,
-        setInit     : setInit,
-        setToken    : setToken,
-        removeToken : removeToken
-    };
+  return {
+    checkToken: checkToken,
+    login: login,
+    getHeaders: getHeaders,
+    logout: logout,
+    getToken: getToken,
+    getInit: getInit,
+    setInit: setInit,
+    setToken: setToken,
+    removeToken: removeToken
+  }
 }
-
 
 /**
  * @name AuthorizationService
@@ -163,18 +140,17 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
  * @returns {{setPermissions: setPermissions, hasPermission: hasPermission}}
  * @constructor
  */
-function AuthorizationService($rootScope){
+function AuthorizationService ($rootScope) {
+  var permissionList
 
-    var permissionList;
-
-    return {
-        setPermissions: function(permissions) {
-          permissionList = permissions;
-          $rootScope.$broadcast('permissionsChanged');
-        },
-        hasPermission: function (permission) {
-          permission = permission.trim();
-          return permissionList[permission];
-        }
-    };
+  return {
+    setPermissions: function (permissions) {
+      permissionList = permissions
+      $rootScope.$broadcast('permissionsChanged')
+    },
+    hasPermission: function (permission) {
+      permission = permission.trim()
+      return permissionList[permission]
+    }
+  }
 }
