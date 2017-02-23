@@ -90,7 +90,7 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
   }
 
   var logout = function () {
-    $http({
+    return $http({
       method: 'POST',
       url: _logoutPath,
       headers: getHeaders()
@@ -103,7 +103,7 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
   }
 
   var login = function (data) {
-    $http({
+    return $http({
       method: 'POST',
       url: _loginPath,
       data: data
