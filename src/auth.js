@@ -14,7 +14,7 @@ angular
 function hasPermission (AuthorizationService) {
   return {
     link: function (scope, element, attrs) {
-      if (!_.isString(attrs.hasPermission)) {
+      if (typeof attrs.hasPermission !== 'string') {
         throw 'hasPermission value must be a string'
       }
       var value = attrs.hasPermission.trim()
