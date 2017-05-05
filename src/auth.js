@@ -75,6 +75,11 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
     AuthorizationService.setPermissions(response.user.positions.active.permissions)
     _initResponse = response
   }
+  
+  var clearInit = function(){
+    _initResponse = null
+  }
+
 
   var getInit = function () {
     return _initResponse
@@ -97,6 +102,7 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
 
     }).then(function (response) {
       removeToken()
+      clearInit()
     }, function (response) {
 
     })
