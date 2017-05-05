@@ -71,15 +71,18 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
     return $cookies.get(_tokenName, {'domain': ENV.cookieHost})
   }
 
+  var removePermissionSignature = function () {
+    AuthorizationService.removePermissionSignature()
+  }
+
   var setInit = function (response) {
     AuthorizationService.setPermissions(response.user.positions.active.permissions)
     _initResponse = response
   }
-  
-  var clearInit = function(){
+
+  var removeInit = function () {
     _initResponse = null
   }
-
 
   var getInit = function () {
     return _initResponse
@@ -102,7 +105,8 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
 
     }).then(function (response) {
       removeToken()
-      clearInit()
+      removeInit()
+      removePermissionSignature()
     }, function (response) {
 
     })
@@ -148,6 +152,7 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
  */
 function AuthorizationService ($rootScope) {
   var permissionList
+  var permissionSignature
 
   return {
     setPermissions: function (permissions) {
@@ -157,6 +162,15 @@ function AuthorizationService ($rootScope) {
     hasPermission: function (permission) {
       permission = permission.trim()
       return permissionList[permission]
+    },
+    setPermissionSignature: function (signature) {
+      permissionSignature = signature
+    },
+    getPermissionSignature: function () {
+      return permissionSignature
+    },
+    removePermissionSignature: function () {
+      permissionSignature = null
     }
   }
 }
