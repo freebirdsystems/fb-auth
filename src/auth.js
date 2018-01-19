@@ -49,7 +49,7 @@ function hasPermission (AuthorizationService) {
  * @returns {{checkToken: checkToken, login: login, getHeaders: getHeaders, logout: logout, getToken: getToken, getInit: getInit, setInit: setInit, setToken: setToken, removeToken: removeToken}}
  * @constructor
  */
-function AuthenticationService ($cookies, $q, $http, AuthorizationService, $state, ENV, toaster) {
+function AuthenticationService ($cookies, $q, $http, AuthorizationService, $state, ENV, toaster, $location, $window) {
   var _initResponse
 
   var _tokenName = ENV.tokenName || '_token'
@@ -60,7 +60,12 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
 
   var removeToken = function () {
     $cookies.remove(_tokenName, {'domain': ENV.cookieHost})
-    $state.go(_loginState)
+    var referrerUrl = $location.$$path
+    if (referrerUrl) {
+      $location.path('/login').search({referrer: referrerUrl})
+    } else {
+      $state.go(_homeState)
+    }
   }
 
   var setToken = function (token) {
@@ -113,13 +118,19 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
   }
 
   var login = function (data) {
+    var referrerUrl = $location.search().referrer
+
     return $http({
       method: 'POST',
       url: _loginPath,
       data: data
     }).then(function (response) {
       setToken(response.data.access_token)
-      $state.go(_homeState)
+      if (referrerUrl) {
+        $location.path(referrerUrl).search({})
+      } else {
+        $state.go(_homeState)
+      }
     }, function (error) {
       toaster.pop('error', 'Whoops!', error.data.message)
     })
