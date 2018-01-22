@@ -49,7 +49,7 @@ function hasPermission (AuthorizationService) {
  * @returns {{checkToken: checkToken, login: login, getHeaders: getHeaders, logout: logout, getToken: getToken, getInit: getInit, setInit: setInit, setToken: setToken, removeToken: removeToken}}
  * @constructor
  */
-function AuthenticationService ($cookies, $q, $http, AuthorizationService, $state, ENV, toaster, $location, $window) {
+function AuthenticationService ($cookies, $q, $http, AuthorizationService, $state, ENV, $location, $window) {
   var _initResponse
 
   var _tokenName = ENV.tokenName || '_token'
@@ -131,8 +131,6 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
       } else {
         $state.go(_homeState)
       }
-    }, function (error) {
-      toaster.pop('error', 'Whoops!', error.data.message)
     })
   }
 
