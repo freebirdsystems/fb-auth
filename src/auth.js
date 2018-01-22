@@ -62,7 +62,11 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
     $cookies.remove(_tokenName, {'domain': ENV.cookieHost})
     var referrerUrl = $location.$$path
     if (referrerUrl) {
-      $location.path('/login').search({referrer: referrerUrl})
+      if (referrerUrl !== '/login') {
+        $location.path('/login').search({referrer: referrerUrl})
+      } else {
+        $state.go(_loginState)
+      }
     } else {
       $state.go(_homeState)
     }
