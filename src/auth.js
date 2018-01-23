@@ -4,6 +4,7 @@ angular
     .module('auth', [])
     .factory('AuthenticationService', AuthenticationService)
     .factory('AuthorizationService', AuthorizationService)
+    .factory('ExpirePasswordService', ExpirePasswordService)
     .directive('hasPermission', hasPermission)
 
 /**
@@ -191,3 +192,19 @@ function AuthorizationService ($rootScope) {
     }
   }
 }
+
+/**
+ * [ExpirePasswordService description]
+ */
+function ExpirePasswordService () {
+  var token = null
+  return {
+    setToken: function (userToken) {
+      token = userToken
+    },
+    getToken: function () {
+      return token
+    }
+  }
+}
+
