@@ -63,14 +63,18 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
     $cookies.remove(_tokenName, {'domain': ENV.cookieHost})
     var referrerUrl = $location.$$path
     if (referrerUrl) {
-      if (referrerUrl !== '/login') {
-        $location.path('/login').search({referrer: referrerUrl})
-      } else {
-        $state.go(_loginState)
-      }
+      $location.path('/login').search({referrer: referrerUrl})
     } else {
       $state.go(_homeState)
     }
+  }
+
+  function checkReferrerUrl(url) {
+    if(url !== '/login' && url !== '/service-maintenance-mode') {
+      return url
+    }
+
+    return null
   }
 
   var setToken = function (token) {
@@ -123,7 +127,7 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
   }
 
   var login = function (data) {
-    var referrerUrl = $location.search().referrer
+    var referrerUrl = checkReferrerUrl($location.search().referrer)
 
     return $http({
       method: 'POST',
