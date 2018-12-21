@@ -56,8 +56,8 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
   var _tokenName = ENV.tokenName || '_token'
   var _loginState = ENV.loginState || 'login'
   var _homeState = ENV.homeState || 'dashboard'
-  var _loginPath = ENV.apiCockpit.concat(ENV.loginPath || '/oauth/token')
-  var _logoutPath = ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout')
+  var _loginPath = ENV.loginPath && ENV.apiCockpit.concat(ENV.loginPath || '/oauth/token')
+  var _logoutPath = ENV.loginPath && ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout')
 
   var removeToken = function () {
     $cookies.remove(_tokenName, {'domain': ENV.cookieHost})
