@@ -59,14 +59,29 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
   var _loginPath = ENV.apiCockpit && ENV.apiCockpit.concat(ENV.loginPath || '/oauth/token')
   var _logoutPath = ENV.apiCockpit && ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout')
 
-  var removeToken = function () {
-    $cookies.remove(_tokenName, {'domain': ENV.cookieHost})
-    var referrerUrl = $location.$$path
-    if (referrerUrl) {
-      $location.path('/login').search({referrer: referrerUrl})
-    } else {
-      $state.go(_homeState)
+  var removeToken = function (withRedirect) {
+    $cookies.remove(_tokenName, {'domain': ENV.cookieHost});
+    
+    var referrerUrl = '/dashboard';
+    
+    if (withRedirect) {
+    
+    var path = (!$location.$$path || $location.$$path === '/login') ? '/dashboard': $location.$$path;
+    
+    if ($cookies.get('_referer')) {
+    
+    if ($cookies.get('_referer') !== path && path !== '/dashboard') {
+    $cookies.put('_referer', path);
     }
+    
+    } else {
+    $cookies.put('_referer', path)
+    }
+    
+    referrerUrl = $cookies.get('_referer');
+    }
+    
+    $location.path('/login').search({referrer: referrerUrl})
   }
 
   function checkReferrerUrl(url) {
@@ -116,13 +131,13 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
       method: 'POST',
       url: _logoutPath,
       headers: getHeaders()
-
-    }).then(function (response) {
-      removeToken()
+      
+      }).then(function (response) {
+      removeToken(false)
       removeInit()
       removePermissionSignature()
-    }, function (response) {
-
+      }, function (response) {
+      
     })
   }
 
