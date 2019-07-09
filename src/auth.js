@@ -47,7 +47,7 @@ function hasPermission (AuthorizationService) {
  * @param AuthorizationService
  * @param $state
  * @param ENV
- * @returns {{checkToken: checkToken, login: login, getHeaders: getHeaders, logout: logout, getToken: getToken, getInit: getInit, setInit: setInit, setToken: setToken, removeToken: removeToken}}
+ * @returns {{checkToken: checkToken, login: login, getHeaders: getHeaders, logout: logout, getToken: getToken, getInit: getInit, setInit: setInit, setToken: setToken, removeToken: removeToken, removeInit: removeInit}}
  * @constructor
  */
 function AuthenticationService ($cookies, $q, $http, AuthorizationService, $state, ENV, toaster, $location, $window) {
@@ -177,7 +177,8 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
     getInit: getInit,
     setInit: setInit,
     setToken: setToken,
-    removeToken: removeToken
+    removeToken: removeToken,
+    removeInit: removeInit
   }
 }
 

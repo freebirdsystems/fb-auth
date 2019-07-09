@@ -1,6 +1,6 @@
 {
   "name": "fb-auth",
-  "version":"1.6.3",
+  "version":"1.6.4",
   "description": "Auth",
   "main": [
     "src/auth.js"
