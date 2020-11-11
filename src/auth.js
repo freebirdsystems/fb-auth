@@ -1,18 +1,18 @@
 'use strict'
 
 angular
-    .module('auth', [])
-    .factory('AuthenticationService', AuthenticationService)
-    .factory('AuthorizationService', AuthorizationService)
-    .factory('ExpirePasswordService', ExpirePasswordService)
-    .directive('hasPermission', hasPermission)
+  .module('auth', [])
+  .factory('AuthenticationService', AuthenticationService)
+  .factory('AuthorizationService', AuthorizationService)
+  .factory('ExpirePasswordService', ExpirePasswordService)
+  .directive('hasPermission', hasPermission)
 
 /**
  * @name  hasPermission
  * @param AuthorizationService
  * @returns {{link: link}}
  */
-function hasPermission (AuthorizationService) {
+function hasPermission(AuthorizationService) {
   return {
     link: function (scope, element, attrs) {
       if (typeof attrs.hasPermission !== 'string') {
@@ -24,7 +24,7 @@ function hasPermission (AuthorizationService) {
         value = value.slice(1).trim()
       }
 
-      function toggleVisibilityBasedOnPermission () {
+      function toggleVisibilityBasedOnPermission() {
         var hasPermission = AuthorizationService.hasPermission(value)
         if (hasPermission && !notPermissionFlag || !hasPermission && notPermissionFlag) {
           element.removeClass('ng-hide')
@@ -50,7 +50,7 @@ function hasPermission (AuthorizationService) {
  * @returns {{checkToken: checkToken, login: login, getHeaders: getHeaders, logout: logout, getToken: getToken, getInit: getInit, setInit: setInit, setToken: setToken, removeToken: removeToken, removeInit: removeInit}}
  * @constructor
  */
-function AuthenticationService ($cookies, $q, $http, AuthorizationService, $state, ENV, toaster, $location, $window) {
+function AuthenticationService($cookies, $q, $http, AuthorizationService, $state, ENV, toaster, $location, $window) {
   var _initResponse
 
   var _tokenName = ENV.tokenName || '_token'
@@ -60,32 +60,31 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
   var _logoutPath = ENV.apiCockpit && ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout')
 
   var removeToken = function (withRedirect) {
-    $cookies.remove(_tokenName, {'domain': ENV.cookieHost});
-    
+    $cookies.remove(_tokenName, { 'domain': ENV.cookieHost });
+
     var referrerUrl = '/dashboard';
-    
+
     if (withRedirect) {
-    
-    var path = (!$location.$$path || $location.$$path === '/login') ? '/dashboard': $location.$$path;
-    
-    if ($cookies.get('_referer')) {
-    
-    if ($cookies.get('_referer') !== path && path !== '/dashboard') {
-    $cookies.put('_referer', path);
+
+      var path = (!$location.$$path || $location.$$path === '/login') ? '/dashboard' : $location.$$path;
+
+      if ($cookies.get('_referer')) {
+
+        if ($cookies.get('_referer') !== path && path !== '/dashboard' && path !== '/auth-code') {
+          $cookies.put('_referer', path);
+        }
+
+      } else {
+        $cookies.put('_referer', path)
+      }
+
+      referrerUrl = $cookies.get('_referer');
     }
-    
-    } else {
-    $cookies.put('_referer', path)
-    }
-    
-    referrerUrl = $cookies.get('_referer');
-    }
-    
-    $location.path('/login').search({referrer: referrerUrl})
+    $location.path('/login').search({ referrer: referrerUrl })
   }
 
   function checkReferrerUrl(url) {
-    if(url !== '/login' && url !== '/service-maintenance-mode') {
+    if (url !== '/login' && url !== '/service-maintenance-mode') {
       return url
     }
 
@@ -93,11 +92,11 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
   }
 
   var setToken = function (token) {
-    $cookies.put(_tokenName, token, {'domain': ENV.cookieHost})
+    $cookies.put(_tokenName, token, { 'domain': ENV.cookieHost })
   }
 
   var getToken = function () {
-    return $cookies.get(_tokenName, {'domain': ENV.cookieHost})
+    return $cookies.get(_tokenName, { 'domain': ENV.cookieHost })
   }
 
   var removePermissionSignature = function () {
@@ -121,7 +120,7 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
     var _token = getToken()
 
     if (_token) {
-      var obj = {'Authorization': 'Bearer ' + _token}
+      var obj = { 'Authorization': 'Bearer ' + _token }
       return obj
     }
   }
@@ -131,35 +130,27 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
       method: 'POST',
       url: _logoutPath,
       headers: getHeaders()
-      
-      }).then(function (response) {
+
+    }).then(function (response) {
       removeToken(false)
       removeInit()
       removePermissionSignature()
-      }, function (response) {
-      
+    }, function (response) {
+
     })
   }
 
   var login = function (data) {
     var referrerUrl = checkReferrerUrl($location.search().referrer)
 
-    return $http({
-      method: 'POST',
-      url: _loginPath,
-      data: data
-    }).then(function (response) {
-      setToken(response.data.access_token)
-      if (referrerUrl) {
-        $location.path(referrerUrl).search({})
-      } else {
-        $state.go(_homeState)
-      }
-    }, function (error) {
-      if (error.status === 401) {
-        toaster.pop('error', 'Whoops!', error.data.message)
-      }
-    })
+    setToken(data.access_token)
+
+    if (referrerUrl) {
+      $location.path(referrerUrl).search({})
+    } else {
+      $state.go(_homeState)
+    }
+
   }
 
   var checkToken = function () {
@@ -188,7 +179,7 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
  * @returns {{setPermissions: setPermissions, hasPermission: hasPermission}}
  * @constructor
  */
-function AuthorizationService ($rootScope) {
+function AuthorizationService($rootScope) {
   var permissionList
   var permissionSignature
 
@@ -216,7 +207,7 @@ function AuthorizationService ($rootScope) {
 /**
  * [ExpirePasswordService description]
  */
-function ExpirePasswordService () {
+function ExpirePasswordService() {
   var token = null
   return {
     setToken: function (userToken) {
