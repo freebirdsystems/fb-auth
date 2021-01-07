@@ -1,42 +1,45 @@
-'use strict'
+"use strict";
 
 angular
-    .module('auth', [])
-    .factory('AuthenticationService', AuthenticationService)
-    .factory('AuthorizationService', AuthorizationService)
-    .factory('ExpirePasswordService', ExpirePasswordService)
-    .directive('hasPermission', hasPermission)
+  .module("auth", [])
+  .factory("AuthenticationService", AuthenticationService)
+  .factory("AuthorizationService", AuthorizationService)
+  .factory("ExpirePasswordService", ExpirePasswordService)
+  .directive("hasPermission", hasPermission);
 
 /**
  * @name  hasPermission
  * @param AuthorizationService
  * @returns {{link: link}}
  */
-function hasPermission (AuthorizationService) {
+function hasPermission(AuthorizationService) {
   return {
     link: function (scope, element, attrs) {
-      if (typeof attrs.hasPermission !== 'string') {
-        throw 'hasPermission value must be a string'
+      if (typeof attrs.hasPermission !== "string") {
+        throw "hasPermission value must be a string";
       }
-      var value = attrs.hasPermission.trim()
-      var notPermissionFlag = value[0] === '!'
+      var value = attrs.hasPermission.trim();
+      var notPermissionFlag = value[0] === "!";
       if (notPermissionFlag) {
-        value = value.slice(1).trim()
+        value = value.slice(1).trim();
       }
 
-      function toggleVisibilityBasedOnPermission () {
-        var hasPermission = AuthorizationService.hasPermission(value)
-        if (hasPermission && !notPermissionFlag || !hasPermission && notPermissionFlag) {
-          element.removeClass('ng-hide')
+      function toggleVisibilityBasedOnPermission() {
+        var hasPermission = AuthorizationService.hasPermission(value);
+        if (
+          (hasPermission && !notPermissionFlag) ||
+          (!hasPermission && notPermissionFlag)
+        ) {
+          element.removeClass("ng-hide");
         } else {
-          element.addClass('ng-hide')
+          element.addClass("ng-hide");
         }
       }
 
-      toggleVisibilityBasedOnPermission()
-      scope.$on('permissionsChanged', toggleVisibilityBasedOnPermission)
-    }
-  }
+      toggleVisibilityBasedOnPermission();
+      scope.$on("permissionsChanged", toggleVisibilityBasedOnPermission);
+    },
+  };
 }
 
 /**
@@ -50,123 +53,135 @@ function hasPermission (AuthorizationService) {
  * @returns {{checkToken: checkToken, login: login, getHeaders: getHeaders, logout: logout, getToken: getToken, getInit: getInit, setInit: setInit, setToken: setToken, removeToken: removeToken, removeInit: removeInit}}
  * @constructor
  */
-function AuthenticationService ($cookies, $q, $http, AuthorizationService, $state, ENV, toaster, $location, $window) {
-  var _initResponse
+function AuthenticationService(
+  $cookies,
+  $q,
+  $http,
+  AuthorizationService,
+  $state,
+  ENV,
+  toaster,
+  $location,
+  $window
+) {
+  var _initResponse;
 
-  var _tokenName = ENV.tokenName || '_token'
-  var _loginState = ENV.loginState || 'login'
-  var _homeState = ENV.homeState || 'dashboard'
-  var _loginPath = ENV.apiCockpit && ENV.apiCockpit.concat(ENV.loginPath || '/oauth/token')
-  var _logoutPath = ENV.apiCockpit && ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout')
+  var _tokenName = ENV.tokenName || "_token";
+  var _loginState = ENV.loginState || "login";
+  var _homeState = ENV.homeState || "dashboard";
+  var _loginPath =
+    ENV.apiCockpit && ENV.apiCockpit.concat(ENV.loginPath || "/oauth/token");
+  var _logoutPath =
+    ENV.apiCockpit && ENV.apiCockpit.concat(ENV.logoutPath || "/auth/logout");
 
-  var removeToken = function (withRedirect) {
-    $cookies.remove(_tokenName, {'domain': ENV.cookieHost});
-    
-    var referrerUrl = '/dashboard';
-    
-    if (withRedirect) {
-    
-    var path = (!$location.$$path || $location.$$path === '/login') ? '/dashboard': $location.$$path;
-    
-    if ($cookies.get('_referer')) {
-    
-    if ($cookies.get('_referer') !== path && path !== '/dashboard') {
-    $cookies.put('_referer', path);
-    }
-    
+  var removeToken = function (withRedirect, redirectUrl) {
+    $cookies.remove(_tokenName, { domain: ENV.cookieHost });
+
+    if (redirectUrl) {
+      location.href = redirectUrl;
     } else {
-    $cookies.put('_referer', path)
+      var referrerUrl = "/dashboard";
+
+      if (withRedirect) {
+        var path =
+          !$location.$$path || $location.$$path === "/login"
+            ? "/dashboard"
+            : $location.$$path;
+
+        if ($cookies.get("_referer")) {
+          if (
+            $cookies.get("_referer") !== path &&
+            path !== "/dashboard" &&
+            path !== "/auth-code"
+          ) {
+            $cookies.put("_referer", path);
+          }
+        } else {
+          $cookies.put("_referer", path);
+        }
+
+        referrerUrl = $cookies.get("_referer");
+      }
+      $location.path("/login").search({ referrer: referrerUrl });
     }
-    
-    referrerUrl = $cookies.get('_referer');
-    }
-    
-    $location.path('/login').search({referrer: referrerUrl})
-  }
+  };
 
   function checkReferrerUrl(url) {
-    if(url !== '/login' && url !== '/service-maintenance-mode') {
-      return url
+    if (url !== "/login" && url !== "/service-maintenance-mode") {
+      return url;
     }
 
-    return null
+    return null;
   }
 
   var setToken = function (token) {
-    $cookies.put(_tokenName, token, {'domain': ENV.cookieHost})
-  }
+    $cookies.put(_tokenName, token, { domain: ENV.cookieHost });
+  };
 
   var getToken = function () {
-    return $cookies.get(_tokenName, {'domain': ENV.cookieHost})
-  }
+    return $cookies.get(_tokenName, { domain: ENV.cookieHost });
+  };
 
   var removePermissionSignature = function () {
-    AuthorizationService.removePermissionSignature()
-  }
+    AuthorizationService.removePermissionSignature();
+  };
 
   var setInit = function (response) {
-    AuthorizationService.setPermissions(response.user.positions.active.permissions)
-    _initResponse = response
-  }
+    AuthorizationService.setPermissions(
+      response.user.positions.active.permissions
+    );
+    _initResponse = response;
+  };
 
   var removeInit = function () {
-    _initResponse = null
-  }
+    _initResponse = null;
+  };
 
   var getInit = function () {
-    return _initResponse
-  }
+    return _initResponse;
+  };
 
   var getHeaders = function () {
-    var _token = getToken()
+    var _token = getToken();
 
     if (_token) {
-      var obj = {'Authorization': 'Bearer ' + _token}
-      return obj
+      var obj = { Authorization: "Bearer " + _token };
+      return obj;
     }
-  }
+  };
 
-  var logout = function () {
+  var logout = function (redirectUrl) {
     return $http({
-      method: 'POST',
+      method: "POST",
       url: _logoutPath,
-      headers: getHeaders()
-      
-      }).then(function (response) {
-      removeToken(false)
-      removeInit()
-      removePermissionSignature()
-      }, function (response) {
-      
-    })
-  }
+      headers: getHeaders(),
+    }).then(
+      function (response) {
+        removeToken(false, redirectUrl);
+        removeInit();
+        removePermissionSignature();
+      },
+      function (response) {}
+    );
+  };
 
   var login = function (data) {
-    var referrerUrl = checkReferrerUrl($location.search().referrer)
+    var referrerUrl = checkReferrerUrl($location.search().referrer);
 
-    return $http({
-      method: 'POST',
-      url: _loginPath,
-      data: data
-    }).then(function (response) {
-      setToken(response.data.access_token)
-      if (referrerUrl) {
-        $location.path(referrerUrl).search({})
-      } else {
-        $state.go(_homeState)
-      }
-    }, function (error) {
-      if (error.status === 401) {
-        toaster.pop('error', 'Whoops!', error.data.message)
-      }
-    })
-  }
+    setToken(data.access_token);
+
+    if (referrerUrl) {
+      $location.path(referrerUrl).search({});
+    } else {
+      $state.go(_homeState);
+    }
+  };
 
   var checkToken = function () {
-    if (typeof getToken() !== 'undefined') {
-      $state.go(_homeState)
+    if (typeof getToken() !== "undefined") {
+      $state.go(_homeState);
     }
-  }
+  };
 
   return {
     checkToken: checkToken,
@@ -178,8 +193,8 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
     setInit: setInit,
     setToken: setToken,
     removeToken: removeToken,
-    removeInit: removeInit
-  }
+    removeInit: removeInit,
+  };
 }
 
 /**
@@ -188,43 +203,42 @@ function AuthenticationService ($cookies, $q, $http, AuthorizationService, $stat
  * @returns {{setPermissions: setPermissions, hasPermission: hasPermission}}
  * @constructor
  */
-function AuthorizationService ($rootScope) {
-  var permissionList
-  var permissionSignature
+function AuthorizationService($rootScope) {
+  var permissionList;
+  var permissionSignature;
 
   return {
     setPermissions: function (permissions) {
-      permissionList = permissions
-      $rootScope.$broadcast('permissionsChanged')
+      permissionList = permissions;
+      $rootScope.$broadcast("permissionsChanged");
     },
     hasPermission: function (permission) {
-      permission = permission.trim()
-      return permissionList[permission]
+      permission = permission.trim();
+      return permissionList[permission];
     },
     setPermissionSignature: function (signature) {
-      permissionSignature = signature
+      permissionSignature = signature;
     },
     getPermissionSignature: function () {
-      return permissionSignature
+      return permissionSignature;
     },
     removePermissionSignature: function () {
-      permissionSignature = null
-    }
-  }
+      permissionSignature = null;
+    },
+  };
 }
 
 /**
  * [ExpirePasswordService description]
  */
-function ExpirePasswordService () {
-  var token = null
+function ExpirePasswordService() {
+  var token = null;
   return {
     setToken: function (userToken) {
-      token = userToken
+      token = userToken;
     },
     getToken: function () {
-      return token
-    }
-  }
+      return token;
+    },
+  };
 }
-
