@@ -59,8 +59,12 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
   var _loginPath = ENV.apiCockpit && ENV.apiCockpit.concat(ENV.loginPath || '/oauth/token')
   var _logoutPath = ENV.apiCockpit && ENV.apiCockpit.concat(ENV.logoutPath || '/auth/logout')
 
-  var removeToken = function (withRedirect) {
+  var removeToken = function (withRedirect, redirectUrl) {
     $cookies.remove(_tokenName, { 'domain': ENV.cookieHost });
+
+    if (redirectUrl) {
+      location.href = redirectUrl;
+    } else {
 
     var referrerUrl = '/dashboard';
 
@@ -81,6 +85,7 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
       referrerUrl = $cookies.get('_referer');
     }
     $location.path('/login').search({ referrer: referrerUrl })
+  }
   }
 
   function checkReferrerUrl(url) {
@@ -125,14 +130,14 @@ function AuthenticationService($cookies, $q, $http, AuthorizationService, $state
     }
   }
 
-  var logout = function () {
+  var logout = function (redirectUrl) {
     return $http({
       method: 'POST',
       url: _logoutPath,
       headers: getHeaders()
 
     }).then(function (response) {
-      removeToken(false)
+      removeToken(false, redirectUrl)
       removeInit()
       removePermissionSignature()
     }, function (response) {
